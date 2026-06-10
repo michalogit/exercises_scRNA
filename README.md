@@ -1,33 +1,13 @@
 # exercises_scRNA
 
-This repository contains small, focused exercises for single-cell RNA-seq analysis in R.
+##10.06.2026
 
-The current project analyzes the public Lutdge et al. dataset with Seurat. It converts
-SingleCellExperiment objects into Seurat objects, combines lymph node stromal and immune
-cell datasets, and generates violin plots for selected marker genes across resting and
-inflamed conditions.
+Part 1 - Coding and testing 
+1. Get the data for Reynolds and Lutdge datasets (zenodo and figshare)
+2. Run the project, producing violing plots for specific genes from the Seurat objects
+3. Move around the Seurat object, eg reading and summarizing the metadata 
+4. Create Shiny app installing the data in the ShinyCell https://github.com/SGDDNB/ShinyCell
 
-## Current analysis
-
-The `Lutdge_dataset` folder includes:
-
-- `Lutdge_Analysis.Rmd`: R notebook that loads LEC, BEC, FRC, and IMM single-cell
-  datasets, merges selected cell populations, and runs the plotting workflow.
-- `revision1.R`: earlier revision-style plotting code used for side-by-side
-  condition comparisons and broader merged-cell-type views.
-- `Lutdge_dataset_refactored.Rproj`: RStudio project file for the analysis.
-
-## What the workflow does
-
-1. Loads `.rds` files containing SingleCellExperiment objects for lymphatic
-   endothelial cells, blood endothelial cells, fibroblastic reticular cells, and
-   immune cells.
-2. Converts the input objects into Seurat objects for downstream analysis.
-3. Builds merged Seurat objects to compare structural and immune cell populations.
-4. Lets the user choose genes of interest, such as `SEMA3A` and `PROX1`.
-5. Maps gene symbols to the dataset feature names.
-6. Creates violin plots comparing expression across annotated cell types and
-   inflammatory states.
-
-Large input data files and generated plot outputs are expected to stay out of the
-repository so the GitHub project remains lightweight.
+Part 1 - Conceptual
+5. Think of re-doing the basic functionality of the app with Shiny for python [https://shiny.posit.co/py/] or Gradio [https://gradio.app/] using python-specidfic data structures for scRNA-seq
+6. Think of extending the app functionality to 2 Seurat objects (or analogous in python). Eg violin plots from 2 objects, 2 UMAPs with cell type selection. 
