@@ -1,0 +1,5 @@
+*.rds
+*.pdf
+*.png
+*.nb.html
+.DS_Store

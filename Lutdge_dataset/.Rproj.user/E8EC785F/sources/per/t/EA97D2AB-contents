@@ -1,0 +1,246 @@
+#' Get Full Feature Name from Symbol
+#'
+#' @param obj Seurat object
+#' @param symbol Gene symbol (e.g., "SEMA3A")
+#' @return Full feature name (e.g., "ENSG00000075213.SEMA3A") or NULL if not found
+get_feature_name <- function(obj, symbol) {
+  features <- rownames(obj)
+  # Match symbol at the end of the string after a dot
+  pattern <- paste0("\\.", symbol, "$")
+  match <- features[grep(pattern, features)]
+  
+  if (length(match) == 0) {
+    warning(paste("Symbol", symbol, "not found in object."))
+    return(NULL)
+  }
+  
+  return(match[1]) # Return the first match
+}
+
+#' Save Violin Plot to PDF and PNG
+#'
+#' @param obj Seurat object
+#' @param feature_name Full feature name for plotting
+#' @param symbol Gene symbol for titles and filenames
+#' @param group_by Metadata column to group by
+#' @param filename_base Base name for the output files
+#' @param title Plot title
+#' @param pt_size Point size in violin plot
+#'
+save_vln_plot <- function(obj, feature_name, symbol, group_by, filename_base, title = NULL, pt_size = 0) {
+  require(Seurat)
+  require(ggplot2)
+  
+  if (is.null(title)) {
+    title <- paste(symbol, "expression by", group_by)
+  }
+  
+  p <- VlnPlot(
+    obj,
+    features = feature_name,
+    group.by = group_by,
+    pt.size = pt_size
+  ) + 
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1)
+    ) +
+    labs(title = title)
+  
+  # Save as PDF
+  pdf(paste0(filename_base, ".pdf"), width = 10, height = 7)
+  print(p)
+  dev.off()
+  
+  # Save as PNG
+  ggsave(paste0(filename_base, ".png"), plot = p, width = 10, height = 7, dpi = 300)
+  
+  return(p)
+}
+
+#' Convert SCE to Seurat
+#'
+#' @param file_path Path to RDS file containing SCE object
+#' @return Seurat object
+sce_to_seurat <- function(file_path) {
+  require(SingleCellExperiment)
+  require(Seurat)
+  
+  sce <- readRDS(file_path)
+  
+  obj <- CreateSeuratObject(
+    counts = assay(sce, "counts"),
+    meta.data = as.data.frame(colData(sce))
+  )
+  
+  obj <- SetAssayData(
+    obj,
+    layer = "data",
+    new.data = assay(sce, "logcounts")
+  )
+  
+  return(obj)
+}
+
+#' Run Revision-Style Side-by-Side Comparison Plots
+#'
+#' Replicates the side-by-side comparison logic from revision1.R.
+#'
+#' @param obj Seurat object
+#' @param dataset_name Name for filenames and titles
+#' @param symbols List of gene symbols to plot
+#'
+run_revision_side_by_side <- function(obj, dataset_name, symbols) {
+  require(Seurat)
+  require(ggplot2)
+  
+  # Define specific mappings and colors based on dataset
+  is_lec <- dataset_name == "LEC"
+  
+  # 1. Prepare Subsets
+  obj_inf <- subset(obj, subset = cond %in% c("activated", "chronic"))
+  obj_ctl <- subset(obj, subset = cond %in% c("resting"))
+  
+  # 2. Rename Labels with Suffixes
+  if (is_lec) {
+    # LEC Specific Renaming from revision1.R
+    rename_lec <- function(labels, suffix) {
+      labels[labels == "SCScLEC"] <- paste("SCS ceiling LEC", suffix)
+      labels[labels == "MedCapsLEC"] <- paste("Medullary capsule LEC", suffix)
+      labels[labels == "SCSfLEC"] <- paste("SCS floor LEC", suffix)
+      labels[labels == "MedSinusLEC"] <- paste("Medullary sinus LEC", suffix)
+      labels[labels == "ParacortLEC"] <- paste("Paracortical LEC", suffix)
+      labels[labels == "ValveLEC"] <- paste("Valve LEC", suffix)
+      return(labels)
+    }
+    obj_inf$label <- rename_lec(as.vector(obj_inf$label), "I")
+    obj_ctl$label <- rename_lec(as.vector(obj_ctl$label), "C")
+    
+    # Define color palette from revision1.R
+    base_cols <- c("#D55E00", "#009E73", "#CC79A7", "#E69F00", "#56B4E9", "#F0E442", "#999999", "#000000")
+    plot_cols <- c("#0072B2", rep(base_cols, each = 2))
+    
+    # Order for LEC
+    level_order <- c(
+      "SCS ceiling LEC C", "SCS ceiling LEC I", 
+      "Medullary capsule LEC C", "Medullary capsule LEC I",
+      "SCS floor LEC C", "SCS floor LEC I",
+      "Medullary sinus LEC C", "Medullary sinus LEC I", 
+      "Paracortical LEC C", "Paracortical LEC I",
+      "Valve LEC C", "Valve LEC I"
+    )
+  } else {
+    # General renaming for other objects
+    obj_inf$label <- paste(obj_inf$label, "(I)")
+    obj_ctl$label <- paste(obj_ctl$label, "(C)")
+    plot_cols <- NULL # Use defaults
+    level_order <- NULL
+  }
+  
+  # 3. Merge and Filter
+  seu_merged <- merge(obj_inf, y = obj_ctl)
+  
+  if (!is.null(level_order)) {
+    seu_merged <- subset(seu_merged, subset = label %in% level_order)
+    seu_merged$label <- factor(seu_merged$label, levels = level_order)
+  }
+  
+  # 4. Plotting Loop
+  for (symbol in symbols) {
+    feature_name <- get_feature_name(seu_merged, symbol)
+    if (!is.null(feature_name)) {
+      p <- VlnPlot(
+        seu_merged,
+        features = feature_name,
+        group.by = "label",
+        pt.size = 0,
+        cols = plot_cols
+      ) + 
+        theme(
+          axis.text.x = element_text(size = 9, angle = 45, hjust = 1), 
+          plot.margin = margin(l = 40),
+          axis.title.x = element_blank()
+        ) + 
+        labs(title = paste0(symbol, " (Lütge et al. 2025) - ", dataset_name)) +
+        NoLegend()
+      
+      # Save
+      filename_base <- paste0("REVISION_", dataset_name, "_", symbol)
+      pdf(paste0(filename_base, ".pdf"), width = 12, height = 7)
+      print(p)
+      dev.off()
+      ggsave(paste0(filename_base, ".png"), plot = p, width = 12, height = 7, dpi = 300)
+    }
+  }
+}
+
+#' Run Broad Merged Comparison Plots
+#'
+#' Replicates the broad 4-way merge and labeling logic from revision1.R.
+#'
+#' @param seurat_objs List of Seurat objects (LEC, BEC, FRC, IMM)
+#' @param symbols List of gene symbols to plot
+#'
+run_broad_merged_comparison <- function(seurat_objs, symbols) {
+  require(Seurat)
+  require(ggplot2)
+  
+  # 1. Merge all 4 objects
+  seu_merged <- merge(seurat_objs$LEC, y = seurat_objs$BEC, add.cell.ids = c("LEC", "BEC"))
+  seu_merged2 <- merge(seu_merged, y = seurat_objs$FRC, add.cell.ids = c("LB", "FRC"))
+  seu_merged3 <- merge(seu_merged2, y = seurat_objs$IMM, add.cell.ids = c("LBF", "IMM"))
+  
+  # 2. Broad Labeling Logic from revision1.R
+  labels <- as.vector(seu_merged3@meta.data$label)
+  rr <- rownames(seu_merged3@meta.data)
+  
+  # Immune grouping
+  labels[labels %in% c("preB", "naiveB", "GCB", "MBC", "plasmaCell")] <- "B cells"
+  labels[labels %in% c("naiveCD4-1", "naiveCD4-2", "naiveCD4-3")] <- "CD4 T cells"
+  labels[labels == "Treg"] <- "Tregs"
+  labels[labels %in% c("CD8Tcm", "CTL/NKcell")] <- "CD8 T cells"
+  labels[labels %in% c("pDC-1", "pDC-2")] <- "Plasmacytoid DCs"
+  labels[labels %in% c("Mph/DC-1", "Mph/DC-2")] <- "Macrophages"
+  
+  # Structural grouping
+  labels[grep("LBF_LB_LEC", rr)] <- "LEC LN"
+  labels[grep("LBF_LB_BEC", rr)] <- "BEC LN"
+  labels[grep("LBF_FRC", rr)] <- "FRC LN"
+  
+  seu_merged3@meta.data$label <- labels
+  
+  # Order from revision1.R
+  ooo <- c(
+    "B cells", "CD4 T cells", "Tregs", "CD8 T cells", "Plasmacytoid DCs", "Macrophages",
+    "LEC LN", "BEC LN", "FRC LN"
+  )
+  
+  seu_merged3 <- subset(seu_merged3, subset = label %in% ooo)
+  seu_merged3$label <- factor(seu_merged3$label, levels = ooo)
+  
+  # 3. Plotting Loop
+  for (symbol in symbols) {
+    feature_name <- get_feature_name(seu_merged3, symbol)
+    if (!is.null(feature_name)) {
+      p <- VlnPlot(
+        seu_merged3,
+        features = feature_name,
+        group.by = "label",
+        pt.size = 0
+      ) + 
+        theme(
+          axis.text.x = element_text(size = 9, angle = 45, hjust = 1), 
+          plot.margin = margin(l = 40),
+          axis.title.x = element_blank()
+        ) + 
+        labs(title = paste0(symbol, " (Lütge et al. 2025) - Broad Merge")) +
+        NoLegend()
+      
+      # Save
+      filename_base <- paste0("REVISION_BROAD_", symbol)
+      pdf(paste0(filename_base, ".pdf"), width = 12, height = 7)
+      print(p)
+      dev.off()
+      ggsave(paste0(filename_base, ".png"), plot = p, width = 12, height = 7, dpi = 300)
+    }
+  }
+}

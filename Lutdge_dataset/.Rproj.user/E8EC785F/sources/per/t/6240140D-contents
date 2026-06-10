@@ -1,0 +1,110 @@
+---
+title: "Lutdge et al. Dataset Analysis"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+library(Seurat)
+library(ggplot2)
+source("utils.R")
+```
+
+## 1. Load and Process Datasets
+
+```{r load_data}
+files <- list(
+  LEC = "LEC_sce.rds",
+  BEC = "BEC_sce.rds",
+  FRC = "FRC_sce.rds",
+  IMM = "IMM_sce.rds"
+)
+
+seurat_objs <- lapply(files, sce_to_seurat)
+names(seurat_objs) <- names(files)
+```
+
+## 2. Merge Endothelial and Fibroblastic Cells
+
+```{r merge_data}
+seu_merged <- merge(seurat_objs$LEC, y = seurat_objs$BEC, add.cell.ids = c("LEC", "BEC"))
+seu_merged2 <- merge(seu_merged, y = seurat_objs$FRC, add.cell.ids = c("LB", "FRC"))
+
+namez <- rownames(seu_merged2@meta.data)
+namez[grep("LB_LEC", namez)] <- "LEC"
+namez[grep("LB_BEC", namez)] <- "BEC"
+namez[grep("FRC", namez)] <- "FRC"
+seu_merged2$cell_type_broad <- namez
+seu_merged2$groupz <- paste0(seu_merged2$cell_type_broad, "_", seu_merged2$cond)
+
+seurat_objs$merged_LEC_BEC_FRC <- seu_merged2
+
+#rm(seu_merged, seu_merged2
+gc()
+```
+
+## 3. Parametrized Violin Plots
+
+Define symbols you want to plot. The script will automatically find the full Ensembl-Symbol combined name.
+
+```{r plot_settings}
+symbols_to_plot <- c("SEMA3A", "PROX1") 
+```
+
+### 3.1 Plotting Loop Function
+
+```{r plot_function}
+run_plotting_suite <- function(obj, dataset_name, symbols) {
+  for (symbol in symbols) {
+    feature_name <- get_feature_name(obj, symbol)
+    
+    if (!is.null(feature_name)) {
+      # Inflamed
+      subset_inflamed <- subset(obj, subset = cond %in% c("activated", "chronic"))
+      save_vln_plot(
+        subset_inflamed, 
+        feature_name = feature_name,
+        symbol = symbol,
+        group_by = "label", 
+        filename_base = paste0(dataset_name, "_INFLAMED_", symbol),
+        title = paste(dataset_name, "INFLAMED,", symbol)
+      )
+      
+      # Resting
+      subset_resting <- subset(obj, subset = cond %in% c("resting"))
+      save_vln_plot(
+        subset_resting, 
+        feature_name = feature_name,
+        symbol = symbol,
+        group_by = "label", 
+        filename_base = paste0(dataset_name, "_RESTING_", symbol),
+        title = paste(dataset_name, "RESTING,", symbol)
+      )
+    }
+  }
+}
+```
+
+### 3.2 Execute Plots
+
+```{r execute_plots}
+# Plot Merged
+run_plotting_suite(seurat_objs$merged_LEC_BEC_FRC, "merged_LEC_BEC_FRC", symbols_to_plot)
+
+# Plot LEC
+run_plotting_suite(seurat_objs$LEC, "LEC", symbols_to_plot)
+
+# Plot IMM
+run_plotting_suite(seurat_objs$IMM, "IMM", symbols_to_plot)
+```
+
+## 4. Revision-Style Comparison Plots
+
+This section replicates the plotting style from `revision1.R`, specifically focusing on side-by-side comparisons of Control (Resting) and Inflamed conditions with custom labeling and color schemes.
+
+```{r execute_revision_plots, echo=FALSE}
+# 1. Side-by-Side LEC comparison
+run_revision_side_by_side(seurat_objs$LEC, "LEC", symbols_to_plot)
+
+# 2. Broad 4-way merge comparison (Immune + Structural)
+run_broad_merged_comparison(seurat_objs, symbols_to_plot)
+```

@@ -1,0 +1,26 @@
+"1","
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBQbG90IE1lcmdlZFxucnVuX3Bsb3R0aW5nX3N1aXRlKHNldXJhdF9vYmpzJG1lcmdlZF9MRUNfQkVDX0ZSQywgXCJtZXJnZWRfTEVDX0JFQ19GUkNcIiwgc3ltYm9sc190b19wbG90KVxuXG4jIFBsb3QgTEVDXG5ydW5fcGxvdHRpbmdfc3VpdGUoc2V1cmF0X29ianMkTEVDLCBcIkxFQ1wiLCBzeW1ib2xzX3RvX3Bsb3QpXG5cbiMgUGxvdCBJTU1cbnJ1bl9wbG90dGluZ19zdWl0ZShzZXVyYXRfb2JqcyRJTU0sIFwiSU1NXCIsIHN5bWJvbHNfdG9fcGxvdClcbmBgYCJ9 -->
+
+```r
+# Plot Merged
+run_plotting_suite(seurat_objs$merged_LEC_BEC_FRC, \"merged_LEC_BEC_FRC\", symbols_to_plot)
+
+# Plot LEC
+run_plotting_suite(seurat_objs$LEC, \"LEC\", symbols_to_plot)
+
+# Plot IMM
+run_plotting_suite(seurat_objs$IMM, \"IMM\", symbols_to_plot)
+```
+
+<!-- rnb-source-end -->
+"
+"0","```r
+# Plot Merged
+run_plotting_suite(seurat_objs$merged_LEC_BEC_FRC, \"merged_LEC_BEC_FRC\", symbols_to_plot)
+
+# Plot LEC
+run_plotting_suite(seurat_objs$LEC, \"LEC\", symbols_to_plot)
+
+# Plot IMM
+run_plotting_suite(seurat_objs$IMM, \"IMM\", symbols_to_plot)
+```"

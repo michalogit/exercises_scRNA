@@ -1,0 +1,28 @@
+{
+    "id": "6240140D",
+    "path": "~/projects/halin_lab_public_scrna/Lutdge_dataset_refactored/Lutdge_Analysis.Rmd",
+    "project_path": "Lutdge_Analysis.Rmd",
+    "type": "r_markdown",
+    "hash": "350715893",
+    "contents": "",
+    "dirty": false,
+    "created": 1779281758568.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "chunk_output_type": "inline",
+        "source_window_id": "",
+        "Source": "Source",
+        "last_setup_crc32": "ad2af0cfc68df805",
+        "cursorPosition": "38,0",
+        "scrollLine": "22"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1780471887,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1780471887732,
+    "read_only": false,
+    "read_only_alternatives": []
+}
