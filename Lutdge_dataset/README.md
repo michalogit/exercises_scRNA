@@ -14,6 +14,11 @@ types and inflammatory states.
 - `Lutdge_dataset_refactored.Rproj`: RStudio project file.
 - `.gitignore`: configured to ignore large data files and generated outputs.
 
+
+## Data
+[https://doi.org/10.6084/m9.figshare.26541127.v1]
+All 4 RDS files to load
+
 ## Usage
 
 1. **Data setup**:
