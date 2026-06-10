@@ -4,7 +4,7 @@
 
 ### Coding and testing 
 
-1. Get the data for Reynolds and Lutdge datasets (zenodo and figshare)
+1. Get the data for Reynolds and Lutdge datasets (zenodo and figshare, following internal readme files)
 2. Run the project, producing violing plots for specific genes from the Seurat objects
 3. Move around the Seurat object, eg reading and summarizing the metadata 
 4. Create Shiny app installing the data in the ShinyCell https://github.com/SGDDNB/ShinyCell
