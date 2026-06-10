@@ -1,0 +1,56 @@
+---
+title: "Reynolds Dataset Analysis"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("utils.R")
+```
+
+## Configuration
+
+Set the path to the data and specify the genes you want to analyze.
+
+```{r parameters}
+# Path to the directory containing 10X files and obs.tsv
+# Defaulting to the original location, but can be updated.
+data_dir <- "."
+
+# List of genes to visualize
+target_genes <- c("SEMA3A", "FGL2", "MARCO") 
+
+# Metadata column for grouping
+grouping_var <- "full_clustering"
+```
+
+## Data Loading and Preprocessing
+
+```{r processing, message=FALSE, warning=FALSE}
+# Load data
+seu <- load_reynolds_data(data_dir)
+
+# Run standard pipeline
+seu <- preprocess_seurat(seu)
+
+# Save the processed object
+saveRDS(seu, file = "reynolds_processed.rds")
+```
+
+## Dimensionality Reduction Plots
+
+```{r dim_plots}
+plot_dim_red(seu, "umap")
+plot_dim_red(seu, "tsne")
+```
+
+## Gene Expression Visualization
+
+```{r violin_plots}
+for (gene in target_genes) {
+  p <- plot_gene_expression(seu, gene = gene, group_by = grouping_var)
+  if (!is.null(p)) {
+    print(p)
+  }
+}
+```
